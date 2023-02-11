@@ -21,18 +21,19 @@ def loop(port):
         if len(message) == 0:
             print("empty from:", sender)
         else:
-            print("sender:", sender, "| message:", pullStringArray(message).decode(utfCode))
+            # print("sender:", sender, "| message:", pullStringArray(message).decode(utfCode))
             reader = BufferReader(message)
             code = ShitnetCodes(reader.readByte())
             print("code:", code)
             if code == ShitnetCodes.register:
                 hostName = reader.pullStringBuffer(True)
-                hosts.addHost(sender, hostName)
-                print("new host:", sender, ", hostName:", hostName)
+                lifeTime = reader.readByte()
+                hosts[sender] = Host(hostName, lifeTime)
+                print("register:", sender, ", hostName:", hostName, ", lifeTime:", lifeTime)
             elif code == ShitnetCodes.listHosts:
                 buf = bytearray(4)
                 buf[0] = 0
-                buf[1] = QOSf.eve
+                buf[1] = 0
                 buf[2] = ClientCodes.hostList
                 hosts.writeToBuffer(buf)
                 sock.sendto(buf, sender)

@@ -1,12 +1,5 @@
-from enum import IntEnum, IntFlag
+from enum import IntEnum
 
-
-class QOSb(IntEnum):
-    eve = 0
-
-class QOSf(IntFlag):
-    eve = 1 << QOSb.eve
-    
 
 class ShitnetCodes(IntEnum):
     listHosts = 3
