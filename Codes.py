@@ -8,12 +8,12 @@ class QOSf(IntFlag):
     eve = 1 << QOSb.eve
     
 
-class ShitnetB(IntEnum):
-    listHosts = 1
-    register = 2
-    unregister = 3
-    connectToHost = 4
-    clear = 5
+class ShitnetCodes(IntEnum):
+    listHosts = 3
+    register = 4
+    unregister = 5
+    connectToHost = 6
+    clearHosts = 7
 
-class ClientB(IntEnum):
+class ClientCodes(IntEnum):
     hostList = 4

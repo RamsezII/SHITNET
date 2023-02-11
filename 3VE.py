@@ -23,23 +23,23 @@ def loop(port):
         else:
             print("sender:", sender, "| message:", pullStringArray(message).decode(utfCode))
             reader = BufferReader(message)
-            code = ShitnetB(reader.readByte())
+            code = ShitnetCodes(reader.readByte())
             print("code:", code)
-            if code == ShitnetB.register:
+            if code == ShitnetCodes.register:
                 hostName = reader.pullStringBuffer(True)
                 hosts.addHost(sender, hostName)
                 print("new host:", sender, ", hostName:", hostName)
-            elif code == ShitnetB.listHosts:
+            elif code == ShitnetCodes.listHosts:
                 buf = bytearray(4)
                 buf[0] = 0
                 buf[1] = QOSf.eve
-                buf[2] = ClientB.hostList
+                buf[2] = ClientCodes.hostList
                 hosts.writeToBuffer(buf)
                 sock.sendto(buf, sender)
                 pass
-            elif code == ShitnetB.connectToHost:
+            elif code == ShitnetCodes.connectToHost:
                 pass
-            elif code == ShitnetB.clear:
+            elif code == ShitnetCodes.clearHosts:
                 hosts.clear()
 
 
