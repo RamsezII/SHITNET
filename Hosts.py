@@ -6,6 +6,7 @@ class Host():
     def __init__(self, nameBytes, lifeTime):
         self.nameBytes = nameBytes
         self.lifeTime = lifeTime
+        self.paquetId = 0
         if lifeTime > 0:
             self.lifeTime += time.time()
     

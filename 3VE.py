@@ -1,47 +1,63 @@
 import socket
 
-from BufferReader import *
+from Buffer import *
 from Codes import *
 from Hosts import *
 from SysArgs import *
-from Util import *
-
 
 #https://stackoverflow.com/questions/62903377/python3-bytes-vs-bytearray-and-converting-to-and-from-strings
 
-def loop(port):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind(("0.0.0.0", port))
-    print("server listening on:", sock.getsockname())
 
-    hosts = Hosts()
+class Main():
 
-    while True:
-        message, sender = sock.recvfrom(1500)
+    def __init__(self, port):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind(("0.0.0.0", port))
+        print("server listening on:", self.sock.getsockname())
+        self.hosts = Hosts()
+
+
+    def update(self):
+        message, self.sender = self.sock.recvfrom(1500)
         if len(message) == 0:
-            print("empty from:", sender)
+            print("empty from:", self.sender)
         else:
             # print("sender:", sender, "| message:", pullStringArray(message).decode(utfCode))
-            reader = BufferReader(message)
-            code = ShitnetCodes(reader.readByte())
-            print("code:", code)
-            if code == ShitnetCodes.register:
-                hostName = reader.pullStringBuffer(True)
-                lifeTime = reader.readByte()
-                hosts[sender] = Host(hostName, lifeTime)
-                print("register:", sender, ", hostName:", hostName, ", lifeTime:", lifeTime)
-            elif code == ShitnetCodes.listHosts:
-                buf = bytearray(4)
-                buf[0] = 0
-                buf[1] = 0
-                buf[2] = ClientCodes.hostList
-                hosts.writeToBuffer(buf)
-                sock.sendto(buf, sender)
+            self.netReader = BufferReader(message)
+            qos = QOSf(self.netReader.readByte())
+            id = self.netReader.readByte()
+            attempt = self.netReader.readByte()
+
+            self.netWriter = bytearray(3)
+            self.netWriter[QOSi.qos] = QOSf.ack
+            self.netWriter[QOSi.paquetId] = id
+            self.netWriter[QOSi.attempt] = attempt
+
+            rec_code = ServerCodes(self.netReader.readByte())
+            print("code:", rec_code)
+
+            if rec_code == ServerCodes.register:
+                self.registerHost()
+            elif rec_code == ServerCodes.listHosts:
+                self.sendHostList()
+            elif rec_code == ServerCodes.connectToHost:
                 pass
-            elif code == ShitnetCodes.connectToHost:
-                pass
-            elif code == ShitnetCodes.clearHosts:
-                hosts.clear()
+            elif rec_code == ServerCodes.clearHosts:
+                self.hosts.clear()
+
+            self.sock.sendto(self.netWriter, self.sender)
+
+
+    def sendHostList(self):
+        self.netWriter.append(ClientCodes.hostList)
+        self.hosts.writeToBuffer(self.netWriter)
+
+    
+    def registerHost(self):
+        hostName = self.netReader.pullStringBuffer(True)
+        lifeTime = self.netReader.readByte()
+        self.hosts[self.sender] = Host(hostName, lifeTime)
+        print("register:", self.sender, ", hostName:", hostName, ", lifeTime:", lifeTime)
 
 
 if __name__ == "__main__":    
@@ -51,4 +67,6 @@ if __name__ == "__main__":
         port = int(args[_port])
     else:
         port = 65000
-    loop(port)
+    main = Main(port)
+    while True:
+        main.update()
