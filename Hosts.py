@@ -28,6 +28,6 @@ class Hosts(dict):
 
     def writeToBuffer(self, buffer):
         self.necroCheck()
-        buffer[3] = len(self)
+        buffer.append(len(self))
         for h in self:
             buffer += self[h].nameBytes

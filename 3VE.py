@@ -33,23 +33,23 @@ class Main():
             self.netWriter[QOSi.paquetId] = id
             self.netWriter[QOSi.attempt] = attempt
 
-            rec_code = ServerCodes(self.netReader.readByte())
+            rec_code = NetCodes(self.netReader.readByte())
             print("code:", rec_code)
 
-            if rec_code == ServerCodes.register:
+            if rec_code == NetCodes.register:
                 self.registerHost()
-            elif rec_code == ServerCodes.listHosts:
+            elif rec_code == NetCodes.listHosts:
                 self.sendHostList()
-            elif rec_code == ServerCodes.connectToHost:
+            elif rec_code == NetCodes.connectToHost:
                 pass
-            elif rec_code == ServerCodes.clearHosts:
+            elif rec_code == NetCodes.clearHosts:
                 self.hosts.clear()
 
             self.sock.sendto(self.netWriter, self.sender)
 
 
     def sendHostList(self):
-        self.netWriter.append(ClientCodes.hostList)
+        self.netWriter.append(NetCodes.listHosts)
         self.hosts.writeToBuffer(self.netWriter)
 
     
