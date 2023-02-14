@@ -19,8 +19,15 @@ class Hosts(dict):
             self.pop(k)
     
     def addHost(self, sender, nameBytes):
+        if sender not in self:
+            print("register:", sender, ", hostName:", nameBytes)
         self[sender] = Host(nameBytes)
-        print("register:", sender, ", hostName:", nameBytes)
+        self.necroCheck()
+        
+    def popHost(self, sender):
+        pop = self.pop(sender)
+        if pop:
+            print("unregister:", sender, ", hostName:", pop.nameBytes)
         self.necroCheck()
 
     def writeToBuffer(self, buffer):

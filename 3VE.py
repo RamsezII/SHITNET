@@ -35,10 +35,12 @@ class Main():
             self.netWriter[QOSi.attempt] = attempt
 
             rec_code = NetCodes(self.netReader.readByte())
-            print("code:", rec_code)
+            # print("code:", rec_code)
 
             if rec_code == NetCodes.register:
-                self.registerHost()
+                self.hosts.addHost(self.sender, self.netReader.pullStringBytes(True))
+            elif rec_code == NetCodes.unregister:
+                self.hosts.popHost(self.sender)
             elif rec_code == NetCodes.listHosts:
                 self.sendHostList()
             elif rec_code == NetCodes.connectToHost:
@@ -53,11 +55,6 @@ class Main():
         self.netWriter[QOSi.qos] |= QOSf.fragmented
         self.netWriter.append(NetCodes.listHosts)
         self.hosts.writeToBuffer(self.netWriter)
-
-    
-    def registerHost(self):
-        nameBytes = self.netReader.pullStringBytes(True)
-        self.hosts.addHost(self.sender, nameBytes)
 
 
 if __name__ == "__main__":    
