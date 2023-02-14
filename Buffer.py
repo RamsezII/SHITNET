@@ -13,7 +13,7 @@ class BufferReader():
         self.iread += 1
         return int(self.buffer[self.iread-1])
     
-    def pullStringBuffer(self, pull):
+    def pullStringBytes(self, pull):
         l = self.readByte()
         buf = self.buffer[self.iread:self.iread+l]
         if pull:

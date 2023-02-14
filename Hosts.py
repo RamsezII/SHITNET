@@ -2,29 +2,26 @@ import time
 
 
 class Host():
-
-    def __init__(self, nameBytes, lifeTime):
+    def __init__(self, nameBytes):
         self.nameBytes = nameBytes
-        self.lifeTime = lifeTime
-        self.paquetId = 0
-        if lifeTime > 0:
-            self.lifeTime += time.time()
-    
-    def necroCheck(self, t):
-        return t > self.lifeTime
+        self.time = time.time()
 
 
 class Hosts(dict):
-
     def necroCheck(self):
-        t = time.time()
+        t = time.time()-2
         l = set()
         for k in self:
-            if self[k].necroCheck(t):
+            if t > self[k].time:
                 l.add(k)
         for k in l:
             print("removed:", k, self[k].nameBytes)
             self.pop(k)
+    
+    def addHost(self, sender, nameBytes):
+        self[sender] = Host(nameBytes)
+        print("register:", sender, ", hostName:", nameBytes)
+        self.necroCheck()
 
     def writeToBuffer(self, buffer):
         self.necroCheck()

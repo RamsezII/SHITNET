@@ -50,15 +50,14 @@ class Main():
 
 
     def sendHostList(self):
+        self.netWriter[QOSi.qos] |= QOSf.fragmented
         self.netWriter.append(NetCodes.listHosts)
         self.hosts.writeToBuffer(self.netWriter)
 
     
     def registerHost(self):
-        hostName = self.netReader.pullStringBuffer(True)
-        lifeTime = self.netReader.readByte()
-        self.hosts[self.sender] = Host(hostName, lifeTime)
-        print("register:", self.sender, ", hostName:", hostName, ", lifeTime:", lifeTime)
+        nameBytes = self.netReader.pullStringBytes(True)
+        self.hosts.addHost(self.sender, nameBytes)
 
 
 if __name__ == "__main__":    
