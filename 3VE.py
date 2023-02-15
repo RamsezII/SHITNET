@@ -1,3 +1,4 @@
+import ipaddress
 import socket
 
 from Buffer import *
@@ -19,55 +20,66 @@ class Main():
 
 
     def update(self):
-        message, self.sender = self.sock.recvfrom(1500)
+        message, self.rec_end = self.sock.recvfrom(1500)
         if len(message) == 0:
-            print("empty from:", self.sender)
+            print("empty from:", self.rec_end)
         else:
             # print("sender:", sender, "| message:", pullStringArray(message).decode(utfCode))
-            self.netReader = BufferReader(message)
-            qos = QOSf(self.netReader.readByte())
-            id = self.netReader.readByte()
-            attempt = self.netReader.readByte()
+            self.recReader = BufferReader(message)
+            qos = QOSf(self.recReader.readByte())
+            id = self.recReader.readByte()
+            attempt = self.recReader.readByte()
 
-            self.netWriter = bytearray(3)
-            self.netWriter[QOSi.qos] = QOSf.ack
-            self.netWriter[QOSi.paquetId] = id
-            self.netWriter[QOSi.attempt] = attempt
+            self.recWriter = bytearray(3)
+            self.recWriter[QOSi.qos] = QOSf.ack
+            self.recWriter[QOSi.paquetId] = id
+            self.recWriter[QOSi.attempt] = attempt
 
-            rec_code = NetCodes(self.netReader.readByte())
+            rec_code = Codes(self.recReader.readByte())
             # print("code:", rec_code)
 
-            if rec_code == NetCodes.register:
-                self.hosts.addHost(self.sender, self.netReader.pullStringBytes(True), self.netReader.pullStringBytes(True))
-            elif rec_code == NetCodes.keepAlive:
-                self.hosts[self.sender].time = time.time()
-            elif rec_code == NetCodes.unregister:
-                self.hosts.popHost(self.sender)
-            elif rec_code == NetCodes.listHosts:
+            if rec_code == Codes.addEve:
+                self.hosts.addHost(self.rec_end, self.recReader.pullStringBytes(), self.recReader.pullStringBytes())
+            elif rec_code == Codes.keepAlive:
+                if self.rec_end in self.hosts:
+                    self.hosts[self.rec_end].time = time.time()
+                    self.recWriter.append(Codes.yes)
+                else:
+                    self.recWriter.append(Codes.missingHost)
+            elif rec_code == Codes.removeEve:
+                self.hosts.popHost(self.rec_end)
+            elif rec_code == Codes.listHosts:
                 self.sendHostList()
-            elif rec_code == NetCodes.joinHost:
-                self.joinHost(self.netReader.pullStringBytes(True), self.netReader.pullStringBytes(True))
-            elif rec_code == NetCodes.clearHosts:
+            elif rec_code == Codes.joinHost:
+                self.joinHost(self.recReader.pullStringBytes(), self.recReader.pullStringBytes())
+            elif rec_code == Codes.clearHosts:
                 self.hosts.clear()
 
-            self.sock.sendto(self.netWriter, self.sender)
+            self.sock.sendto(self.recWriter, self.rec_end)
 
 
     def sendHostList(self):
-        self.netWriter[QOSi.qos] |= QOSf.fragmented
-        self.netWriter.append(NetCodes.listHosts)
-        self.hosts.writeToBuffer(self.netWriter)
+        self.recWriter[QOSi.qos] |= QOSf.fragmented
+        self.hosts.writeToBuffer(self.recWriter)
     
 
-    def joinHost(self, nameBytes, passBytes):
-        for host in self.hosts:
+    def joinHost(self, nameBytes, publicPassBytes):
+        for hostEnd in self.hosts:
+            host = self.hosts[hostEnd]
             if host.nameBytes == nameBytes:
-                if host.passBytes == passBytes:
+                if host.passBytes != publicPassBytes:
+                    self.recWriter.append(Codes.wrongPass)
+                else:
+                    self.recWriter.append(Codes.yes)
+                    self.recWriter += writeIPEndToBuf(hostEnd)
+                    
                     writer = bytearray(QOSi.last)
-                    writer[QOSi.qos] = QOSf.ack | QOSf.nocheck
-                    writer.append(NetCodes.joinHost)
-                    self.sock.sendto(writer, self.sender)
-                break
+                    writer[QOSi.qos] = QOSf.nocheck
+                    writer.append(Codes.joinHost)
+                    writer += writeIPEndToBuf(self.rec_end)
+                    self.sock.sendto(writer, hostEnd)
+                return
+        self.recWriter.append(Codes.missingHost)
 
 
 if __name__ == "__main__":    
