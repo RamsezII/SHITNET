@@ -1,4 +1,3 @@
-import ipaddress
 import socket
 
 from Buffer import *
@@ -39,7 +38,7 @@ class Main():
             # print("code:", rec_code)
 
             if rec_code == Codes.addEve:
-                self.hosts.addHost(self.rec_end, self.recReader.pullStringBytes(), self.recReader.pullStringBytes())
+                self.hosts.addHost(self.rec_end, self.recReader.pullString_cs(), self.recReader.pullString_cs())
             elif rec_code == Codes.keepAlive:
                 if self.rec_end in self.hosts:
                     self.hosts[self.rec_end].time = time.time()
@@ -51,7 +50,7 @@ class Main():
             elif rec_code == Codes.listHosts:
                 self.sendHostList()
             elif rec_code == Codes.joinHost:
-                self.joinHost(self.recReader.pullStringBytes(), self.recReader.pullStringBytes())
+                self.joinHost(self.recReader.pullString_cs(), self.recReader.pullString_cs())
             elif rec_code == Codes.clearHosts:
                 self.hosts.clear()
 
