@@ -4,26 +4,32 @@ from enum import IntEnum, IntFlag
 class NetCodes(IntEnum):
 	start = 0
 	kill = 1
-	register = 2
-	unregister = 3
-	listHosts = 4
-	connectToHost = 5
-	clearHosts = 6
+	hostName = 2
+	register = 3
+	unregister = 4
+	listHosts = 5
+	joinHost = 6
+	clearHosts = 7
+	hostPassword = 8
+	keepAlive = 9
         
 
 class QOSb(IntEnum):
-	ack = 0
-	reliable = 1
-	ordered = 2
-	fragmented = 3
+	nocheck = 0
+	ack = 1
+	reliable = 2
+	ordered = 3
+	fragmented = 4
 
 class QOSf(IntFlag):
-	ack = 1 << 0
-	reliable = 1 << 1
-	ordered = 1 << 2
-	fragmented = 1 << 3
+	nocheck = 1 << 0
+	ack = 1 << 1
+	reliable = 1 << 2
+	ordered = 1 << 3
+	fragmented = 1 << 4
 
 class QOSi(IntEnum):
 	qos = 0
 	paquetId = 1
 	attempt = 2
+
