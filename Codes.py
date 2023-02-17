@@ -4,29 +4,30 @@ from enum import IntEnum, IntFlag
 class Codes(IntEnum):
 	start = 0
 	kill = 1
-	hostName = 2
-	addEve = 3
-	removeEve = 4
-	listHosts = 5
-	joinHost = 6
-	clearHosts = 7
-	hostPassword = 8
-	keepAlive = 10
-	yes = 11
-	no = 12
-	missingHost = 13
-	wrongPass = 14
+	addEve = 2
+	removeEve = 3
+	listHosts = 4
+	joinHost = 5
+	clearHosts = 6
+	hostPassword = 7
+	holepunchTimeoutTest = 8
+	publicIP = 10
+	holePunch = 11
+	yes = 12
+	no = 13
+	missingHost = 14
+	wrongPass = 15
         
-		
+
 class QOSb(IntEnum):
-	nocheck = 0
+	eve = 0
 	ack = 1
 	reliable = 2
 	ordered = 3
 	fragmented = 4
 
 class QOSf(IntFlag):
-	nocheck = 1 << 0
+	eve = 1 << 0
 	ack = 1 << 1
 	reliable = 1 << 2
 	ordered = 1 << 3

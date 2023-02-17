@@ -1,11 +1,15 @@
 import time
 
+from Buffer import *
+from Codes import *
 
 class Host():
-    def __init__(self, nameBytes, passBytes):
-        self.nameBytes = nameBytes
-        self.passBytes = passBytes
+    def __init__(self, reader:BufferReader):
+        self.localEnd = reader.readBytes(6)
+        self.nameBytes = reader.pullString_cs()
+        self.passBytes = reader.pullString_cs()
         self.time = time.time()
+        print("hostName", self.nameBytes, ", publicPassword", self.passBytes)
 
 
 class Hosts(dict):
@@ -19,10 +23,9 @@ class Hosts(dict):
             print("removed:", k, self[k].nameBytes)
             self.pop(k)
     
-    def addHost(self, sender, nameBytes, passBytes):
-        if sender not in self:
-            print("register:", sender, ", hostName:", nameBytes, ", pass1:", passBytes)
-        self[sender] = Host(nameBytes, passBytes)
+    def addHost(self, sender, reader:BufferReader):
+        print("new endpoint", sender)
+        self[sender] = Host(reader)
         self.necroCheck()
         
     def popHost(self, sender):

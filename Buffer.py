@@ -1,7 +1,6 @@
-
-
 import ipaddress
 
+emptyBuf = bytearray()
 
 class BufferReader():
     def __init__(self, buffer):
@@ -9,12 +8,19 @@ class BufferReader():
         self.end = len(buffer)
         self.iread = 0
     
+    def hasNext(self):
+        return self.iread < self.end
+    
     def peekByte(self):
         return int(self.buffer[self.iread])
     
     def readByte(self):
         self.iread += 1
         return int(self.buffer[self.iread-1])
+
+    def readBytes(self, count):
+        self.iread += count
+        return self.buffer[self.iread-count:self.iread]
     
     def pullString_cs(self):
         l = self.readByte()
@@ -23,7 +29,7 @@ class BufferReader():
         return buf
 
 
-def writeIPEndToBuf(IPEnd):
+def ipendToBytes(IPEnd):
     buf = bytearray()
     buf += int(ipaddress.ip_address(IPEnd[0])).to_bytes(4, 'big')
     buf += IPEnd[1].to_bytes(2, 'little')

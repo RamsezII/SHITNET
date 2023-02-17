@@ -5,11 +5,8 @@ from Codes import *
 from Hosts import *
 from SysArgs import *
 
-#https://stackoverflow.com/questions/62903377/python3-bytes-vs-bytearray-and-converting-to-and-from-strings
-
 
 class Main():
-
     def __init__(self, port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -19,66 +16,84 @@ class Main():
 
 
     def update(self):
-        message, self.rec_end = self.sock.recvfrom(1500)
+        message, self.recEnd = self.sock.recvfrom(1500)
         if len(message) == 0:
-            print("empty from:", self.rec_end)
+            print("empty from:", self.recEnd)
         else:
             # print("sender:", sender, "| message:", pullStringArray(message).decode(utfCode))
-            self.recReader = BufferReader(message)
-            qos = QOSf(self.recReader.readByte())
-            id = self.recReader.readByte()
-            attempt = self.recReader.readByte()
+            reader = BufferReader(message)
+            qos = QOSf(reader.readByte())
+            id = reader.readByte()
+            attempt = reader.readByte()
 
-            self.recWriter = bytearray(3)
-            self.recWriter[QOSi.qos] = QOSf.ack
-            self.recWriter[QOSi.paquetId] = id
-            self.recWriter[QOSi.attempt] = attempt
+            writer = bytearray(3)
+            writer[QOSi.qos] = QOSf.ack
+            writer[QOSi.paquetId] = id
+            writer[QOSi.attempt] = attempt
 
-            rec_code = Codes(self.recReader.readByte())
-            # print("code:", rec_code)
-
-            if rec_code == Codes.addEve:
-                self.hosts.addHost(self.rec_end, self.recReader.pullString_cs(), self.recReader.pullString_cs())
-            elif rec_code == Codes.keepAlive:
-                if self.rec_end in self.hosts:
-                    self.hosts[self.rec_end].time = time.time()
-                    self.recWriter.append(Codes.yes)
+            if len(message) == QOSi.last:
+                if self.recEnd in self.hosts:
+                    self.hosts[self.recEnd].time = time.time()
+                    writer.append(Codes.yes)
                 else:
-                    self.recWriter.append(Codes.missingHost)
-            elif rec_code == Codes.removeEve:
-                self.hosts.popHost(self.rec_end)
-            elif rec_code == Codes.listHosts:
-                self.sendHostList()
-            elif rec_code == Codes.joinHost:
-                self.joinHost(self.recReader.pullString_cs(), self.recReader.pullString_cs())
-            elif rec_code == Codes.clearHosts:
-                self.hosts.clear()
+                    writer.append(Codes.missingHost)
+            else:
+                while reader.hasNext():
+                    recCode = Codes(reader.readByte())
+                    if recCode == Codes.holepunchTimeoutTest:
+                        self.holePunchTimeoutTest(self.recEnd)
+                    elif recCode == Codes.publicIP:
+                        writer += ipendToBytes(self.recEnd)
+                    elif recCode == Codes.addEve:
+                        self.hosts.addHost(self.recEnd, reader)
+                    elif recCode == Codes.removeEve:
+                        self.hosts.popHost(self.recEnd)
+                    elif recCode == Codes.listHosts:
+                        writer[QOSi.qos] |= QOSf.fragmented
+                        self.hosts.writeToBuffer(writer)
+                    elif recCode == Codes.joinHost:
+                        self.joinHost(writer, reader)
+                    elif recCode == Codes.clearHosts:
+                        self.hosts.clear()                
 
-            self.sock.sendto(self.recWriter, self.rec_end)
-
-
-    def sendHostList(self):
-        self.recWriter[QOSi.qos] |= QOSf.fragmented
-        self.hosts.writeToBuffer(self.recWriter)
+            self.sock.sendto(writer, self.recEnd)
     
 
-    def joinHost(self, nameBytes, publicPassBytes):
+    def joinHost(self, recWriter:bytearray, reader:BufferReader):
+        incomingLocalEnd = reader.readBytes(6)
+        nameBytes = reader.pullString_cs()
+        publicPassBytes = reader.pullString_cs()
+        self.hosts.necroCheck()
         for hostEnd in self.hosts:
             host = self.hosts[hostEnd]
             if host.nameBytes == nameBytes:
-                if host.passBytes != publicPassBytes:
-                    self.recWriter.append(Codes.wrongPass)
-                else:
-                    self.recWriter.append(Codes.yes)
-                    self.recWriter += writeIPEndToBuf(hostEnd)
-                    
+                if host.passBytes == emptyBuf or host.passBytes == publicPassBytes:
+                    recWriter.append(Codes.yes)
+                    recWriter += ipendToBytes(hostEnd)
+                    recWriter += host.localEnd
+                    # warn host to mirror holepunch
                     writer = bytearray(QOSi.last)
-                    writer[QOSi.qos] = QOSf.nocheck
-                    writer.append(Codes.joinHost)
-                    writer += writeIPEndToBuf(self.rec_end)
+                    writer[QOSi.qos] = QOSf.eve
+                    writer.append(Codes.holePunch)
+                    writer += ipendToBytes(self.recEnd)
+                    writer += incomingLocalEnd
                     self.sock.sendto(writer, hostEnd)
+                else:
+                    recWriter.append(Codes.wrongPass)
                 return
-        self.recWriter.append(Codes.missingHost)
+        recWriter.append(Codes.missingHost)
+    
+
+    def holePunchTimeoutTest(self, sender):
+        i = 0
+        while True:
+            time.sleep(1)
+            i += 1
+            writer = bytearray(3)
+            writer[QOSi.qos] = QOSf.ack | QOSf.eve
+            writer.append(Codes.holepunchTimeoutTest)
+            writer.append(i)
+            self.sock.sendto(writer, sender)
 
 
 if __name__ == "__main__":    
