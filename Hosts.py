@@ -3,6 +3,7 @@ import time
 from Buffer import *
 from Codes import *
 
+
 class Host():
     def __init__(self, reader:BufferReader):
         self.localEnd = reader.readBytes(6)
@@ -29,10 +30,10 @@ class Hosts(dict):
         self.necroCheck()
         
     def popHost(self, sender):
+        self.necroCheck()
         if sender in self:
             pop = self.pop(sender)
             print("unregister:", sender, ", hostName:", pop.nameBytes)
-        self.necroCheck()
 
     def writeToBuffer(self, buffer):
         self.necroCheck()

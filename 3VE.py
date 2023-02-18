@@ -42,7 +42,7 @@ class Main():
                     recCode = Codes(reader.readByte())
                     if recCode == Codes.holepunchTimeoutTest:
                         self.holePunchTimeoutTest(self.recEnd)
-                    elif recCode == Codes.publicIP:
+                    elif recCode == Codes.getPublicEnd:
                         writer += ipendToBytes(self.recEnd)
                     elif recCode == Codes.addEve:
                         self.hosts.addHost(self.recEnd, reader)
@@ -69,8 +69,8 @@ class Main():
             if host.nameBytes == nameBytes:
                 if host.passBytes == emptyBuf or host.passBytes == publicPassBytes:
                     recWriter.append(Codes.yes)
-                    recWriter += ipendToBytes(hostEnd)
                     recWriter += host.localEnd
+                    recWriter += ipendToBytes(hostEnd)
                     # warn host to mirror holepunch
                     writer = bytearray(QOSi.last)
                     writer[QOSi.qos] = QOSf.eve

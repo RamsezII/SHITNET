@@ -11,7 +11,7 @@ class Codes(IntEnum):
 	clearHosts = 6
 	hostPassword = 7
 	holepunchTimeoutTest = 8
-	publicIP = 10
+	getPublicEnd = 10
 	holePunch = 11
 	yes = 12
 	no = 13
