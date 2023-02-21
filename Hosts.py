@@ -6,7 +6,7 @@ from Codes import *
 
 class Host():
     def __init__(self, reader:BufferReader):
-        self.localEnd = reader.readBytes(6)
+        self.localEndBytes = reader.readBytes(6)
         self.nameBytes = reader.pullString_cs()
         self.passBytes = reader.pullString_cs()
         self.time = time.time()
@@ -24,10 +24,15 @@ class Hosts(dict):
             print("removed:", k, self[k].nameBytes)
             self.pop(k)
     
-    def addHost(self, sender, reader:BufferReader):
-        print("new endpoint", sender)
-        self[sender] = Host(reader)
+    def addHost(self, sender, reader:BufferReader, writer:bytearray):
         self.necroCheck()
+        print("new endpoint", sender)
+        host = Host(reader)
+        if host.nameBytes in self.values():
+            writer.append(Codes.alreadyHost)
+        else:
+            writer.append(Codes.yes)
+            self[sender] = host
         
     def popHost(self, sender):
         self.necroCheck()

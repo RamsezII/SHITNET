@@ -6,7 +6,7 @@ from Hosts import *
 from SysArgs import *
 
 
-class Main():
+class EVE():
     def __init__(self, port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -22,7 +22,7 @@ class Main():
         else:
             # print("sender:", sender, "| message:", pullStringArray(message).decode(utfCode))
             reader = BufferReader(message)
-            qos = QOSf(reader.readByte())
+            recQos = QOSf(reader.readByte())
             id = reader.readByte()
             attempt = reader.readByte()
 
@@ -40,43 +40,45 @@ class Main():
             else:
                 while reader.hasNext():
                     recCode = Codes(reader.readByte())
-                    if recCode == Codes.holepunchTimeoutTest:
+                    if recCode == Codes.firewallTest:
                         self.holePunchTimeoutTest(self.recEnd)
                     elif recCode == Codes.getPublicEnd:
                         writer += ipendToBytes(self.recEnd)
                     elif recCode == Codes.addEve:
-                        self.hosts.addHost(self.recEnd, reader)
-                    elif recCode == Codes.removeEve:
+                        self.hosts.addHost(self.recEnd, reader, writer)
+                    elif recCode == Codes.rmEve:
                         self.hosts.popHost(self.recEnd)
                     elif recCode == Codes.listHosts:
                         writer[QOSi.qos] |= QOSf.fragmented
                         self.hosts.writeToBuffer(writer)
-                    elif recCode == Codes.joinHost:
+                    elif recCode == Codes.joinByName:
                         self.joinHost(writer, reader)
-                    elif recCode == Codes.clearHosts:
-                        self.hosts.clear()                
-
+                    elif recCode == Codes.yes:
+                        pass
+                    elif recCode == Codes.rsEve:
+                        self.hosts.clear()
             self.sock.sendto(writer, self.recEnd)
     
 
-    def joinHost(self, recWriter:bytearray, reader:BufferReader):
-        incomingLocalEnd = reader.readBytes(6)
-        nameBytes = reader.pullString_cs()
-        publicPassBytes = reader.pullString_cs()
+    def joinHost(self, recWriter:bytearray, recReader:BufferReader):
+        incomingLocalEnd = recReader.readBytes(6)
+        nameBytes = recReader.pullString_cs()
+        publicPassBytes = recReader.pullString_cs()
         self.hosts.necroCheck()
         for hostEnd in self.hosts:
-            host = self.hosts[hostEnd]
+            host:Host = self.hosts[hostEnd]
             if host.nameBytes == nameBytes:
-                if host.passBytes == emptyBuf or host.passBytes == publicPassBytes:
+                if host.passBytes == publicPassBytes:
                     recWriter.append(Codes.yes)
-                    recWriter += host.localEnd
+                    recWriter.append(Codes.holePunch)
+                    recWriter += host.localEndBytes
                     recWriter += ipendToBytes(hostEnd)
                     # warn host to mirror holepunch
                     writer = bytearray(QOSi.last)
                     writer[QOSi.qos] = QOSf.eve
                     writer.append(Codes.holePunch)
-                    writer += ipendToBytes(self.recEnd)
                     writer += incomingLocalEnd
+                    writer += ipendToBytes(self.recEnd)
                     self.sock.sendto(writer, hostEnd)
                 else:
                     recWriter.append(Codes.wrongPass)
@@ -91,18 +93,18 @@ class Main():
             i += 1
             writer = bytearray(3)
             writer[QOSi.qos] = QOSf.ack | QOSf.eve
-            writer.append(Codes.holepunchTimeoutTest)
+            writer.append(Codes.firewallTest)
             writer.append(i)
             self.sock.sendto(writer, sender)
 
 
 if __name__ == "__main__":    
-    _port = "-port"
+    _port = "-p"
     args = sysArgs(_port)
     if _port in args:
         port = int(args[_port])
     else:
         port = 65000
-    main = Main(port)
+    main = EVE(port)
     while True:
         main.update()

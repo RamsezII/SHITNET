@@ -2,21 +2,22 @@ from enum import IntEnum, IntFlag
 
 
 class Codes(IntEnum):
-	start = 0
-	kill = 1
-	addEve = 2
-	removeEve = 3
+	addEve = 1
+	getPublicEnd = 2
+	firewallTest = 3
 	listHosts = 4
-	joinHost = 5
-	clearHosts = 6
-	hostPassword = 7
-	holepunchTimeoutTest = 8
-	getPublicEnd = 10
-	holePunch = 11
-	yes = 12
-	no = 13
-	missingHost = 14
-	wrongPass = 15
+	joinByName = 5
+	joinByIP = 6
+	prvPass = 7
+	pubPass = 8
+	rmEve = 9
+	rsEve = 10
+	holePunch = 12
+	missingHost = 13
+	alreadyHost = 14
+	no = 15
+	wrongPass = 16
+	yes = 17
         
 
 class QOSb(IntEnum):
