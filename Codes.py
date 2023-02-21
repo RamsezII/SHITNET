@@ -12,12 +12,12 @@ class Codes(IntEnum):
 	pubPass = 8
 	rmEve = 9
 	rsEve = 10
-	holePunch = 12
-	missingHost = 13
-	alreadyHost = 14
-	no = 15
-	wrongPass = 16
-	yes = 17
+	holePunch = 13
+	missingHost = 14
+	alreadyHost = 15
+	no = 16
+	wrongPass = 17
+	yes = 18
         
 
 class QOSb(IntEnum):
