@@ -29,7 +29,7 @@ class BufferReader():
         return buf
 
 
-def ipendToBytes(IPEnd):
+def netendToBytes(IPEnd):
     buf = bytearray()
     buf += int(ipaddress.ip_address(IPEnd[0])).to_bytes(4, 'big')
     buf += IPEnd[1].to_bytes(2, 'little')
